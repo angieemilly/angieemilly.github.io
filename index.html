@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d63f7d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Control">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Mi Agenda</title>
+<script>
+(function(){ try { const p = JSON.parse(localStorage.getItem("mi-agenda-apariencia")) || {}; const r = document.documentElement;
+  r.setAttribute("data-palette", p.palette || "rosa"); if (p.mode === "light" || p.mode === "dark") r.setAttribute("data-theme", p.mode);
+} catch(e){ document.documentElement.setAttribute("data-palette","rosa"); } })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: cabecera con resumen, pestañas (Tareas / Mi día / Semana / Apariencia), una columna que se abre a dos en pantallas anchas */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#18202e; --muted:#5d6779; --line:#dfe3ea;
+  --accent:#2f55d4; --accent-ink:#ffffff;
+  --estudio:#2f6fdc; --estudio-bg:#e7efff;
+  --trabajo:#0f8a6a; --trabajo-bg:#e1f5ee;
+  --personal:#8a46c9; --personal-bg:#f2e9fb;
+  --late:#c9322b; --late-bg:#fde9e7; --soon:#c46a0b; --soon-bg:#fff1df; --ok:#3d7a3a;
+  --now:#fff6c7;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151d; --surface:#1a1f2a; --ink:#e8ecf3; --muted:#9aa3b5; --line:#2c3342;
+  --accent:#7c9bff; --accent-ink:#0d1220;
+  --estudio:#86aaff; --estudio-bg:#1d2a47; --trabajo:#4fd1ab; --trabajo-bg:#15342c;
+  --personal:#c79bf2; --personal-bg:#2e2140;
+  --late:#ff7a70; --late-bg:#3e1c1a; --soon:#f2a64c; --soon-bg:#3a2a14; --ok:#8ccf85;
+  --now:#332e14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151d; --surface:#1a1f2a; --ink:#e8ecf3; --muted:#9aa3b5; --line:#2c3342;
+  --accent:#7c9bff; --accent-ink:#0d1220;
+  --estudio:#86aaff; --estudio-bg:#1d2a47; --trabajo:#4fd1ab; --trabajo-bg:#15342c;
+  --personal:#c79bf2; --personal-bg:#2e2140;
+  --late:#ff7a70; --late-bg:#3e1c1a; --soon:#f2a64c; --soon-bg:#3a2a14; --ok:#8ccf85;
+  --now:#332e14; color-scheme:dark}
+
+/* paletas elegibles en Apariencia (azul = la base de arriba) */
+:root[data-palette="rosa"]{--bg:#fcf1f5;--surface:#ffffff;--line:#f2d9e3;--ink:#2a1720;--muted:#7a5a68;--accent:#d63f7d;--accent-ink:#ffffff;--now:#ffe0ec;}
+@media (prefers-color-scheme: dark){:root[data-palette="rosa"]:not([data-theme="light"]){--bg:#1d1218;--surface:#281a22;--line:#432a37;--ink:#f6e7ee;--muted:#c09aab;--accent:#ff8cbd;--accent-ink:#2b0c1a;--now:#3d1f2e;}}
+:root[data-palette="rosa"][data-theme="dark"]{--bg:#1d1218;--surface:#281a22;--line:#432a37;--ink:#f6e7ee;--muted:#c09aab;--accent:#ff8cbd;--accent-ink:#2b0c1a;--now:#3d1f2e;}
+:root[data-palette="lavanda"]{--bg:#f5f2fc;--surface:#ffffff;--line:#e2dbf3;--ink:#211a33;--muted:#675d80;--accent:#7b52d6;--accent-ink:#ffffff;--now:#ece4ff;}
+@media (prefers-color-scheme: dark){:root[data-palette="lavanda"]:not([data-theme="light"]){--bg:#16131f;--surface:#201b2c;--line:#352d48;--ink:#ece8f7;--muted:#a99fc2;--accent:#b49bff;--accent-ink:#1a1030;--now:#2c2346;}}
+:root[data-palette="lavanda"][data-theme="dark"]{--bg:#16131f;--surface:#201b2c;--line:#352d48;--ink:#ece8f7;--muted:#a99fc2;--accent:#b49bff;--accent-ink:#1a1030;--now:#2c2346;}
+:root[data-palette="durazno"]{--bg:#fdf4ef;--surface:#ffffff;--line:#f3ddd0;--ink:#2c1d15;--muted:#7d6255;--accent:#d65a3c;--accent-ink:#ffffff;--now:#ffe6d8;}
+@media (prefers-color-scheme: dark){:root[data-palette="durazno"]:not([data-theme="light"]){--bg:#1d1511;--surface:#281d18;--line:#44302a;--ink:#f7ebe4;--muted:#c4a597;--accent:#ff9a7f;--accent-ink:#2e120a;--now:#3e2619;}}
+:root[data-palette="durazno"][data-theme="dark"]{--bg:#1d1511;--surface:#281d18;--line:#44302a;--ink:#f7ebe4;--muted:#c4a597;--accent:#ff9a7f;--accent-ink:#2e120a;--now:#3e2619;}
+:root[data-palette="menta"]{--bg:#f0f8f5;--surface:#ffffff;--line:#d5ebe2;--ink:#14261f;--muted:#557366;--accent:#14866a;--accent-ink:#ffffff;--now:#dcf5ea;}
+@media (prefers-color-scheme: dark){:root[data-palette="menta"]:not([data-theme="light"]){--bg:#101a17;--surface:#172521;--line:#284039;--ink:#e5f3ee;--muted:#93b8aa;--accent:#5fd6ad;--accent-ink:#08261c;--now:#1b3a30;}}
+:root[data-palette="menta"][data-theme="dark"]{--bg:#101a17;--surface:#172521;--line:#284039;--ink:#e5f3ee;--muted:#93b8aa;--accent:#5fd6ad;--accent-ink:#08261c;--now:#1b3a30;}
+
+/* apariencia */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.sw{border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;font-weight:600;text-align:left}
+.sw[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.sw .dots{display:flex;gap:4px}
+.sw .dots i{width:22px;height:22px;border-radius:50%;border:1px solid rgb(0 0 0 / .1);display:block}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.steps li{padding-left:4px}
+.panel h2{font-size:1.1rem}
+.ap-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.ap-grid{grid-template-columns:minmax(0,1fr)}}
+
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+.switch{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--accent);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:.88rem}
+.head-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px 80px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.9rem;font-weight:700}
+h2{font-size:1.25rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+
+/* cabecera */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.today{font-size:.95rem;color:var(--muted)}
+.save-note{font-size:.8rem;color:var(--muted)}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--f-display);font-size:1.6rem;line-height:1.1}
+.stat.late b{color:var(--late)} .stat.soon b{color:var(--soon)}
+.stat small{color:var(--muted);font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* pestañas */
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;align-self:flex-start;max-width:100%;overflow-x:auto}
+.tabs button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+@media (max-width:420px){.tabs button{padding:7px 10px;font-size:.88rem}}
+
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--late)}
+.btn:hover{filter:brightness(.97)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spread{justify-content:space-between}
+
+/* filtros */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:.85rem;font-weight:500}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+
+/* tareas */
+.group{display:flex;flex-direction:column;gap:8px}
+.group-title{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;border-left:4px solid var(--c, var(--line))}
+.task.estudio{--c:var(--estudio)} .task.trabajo{--c:var(--trabajo)} .task.personal{--c:var(--personal)}
+.task.done{opacity:.6}
+.task.done .t-title{text-decoration:line-through}
+.task.example{border-style:dashed;opacity:.75}
+.check{width:22px;height:22px;border-radius:6px;border:2px solid var(--c);background:transparent;margin-top:2px;display:grid;place-items:center;padding:0}
+.task.done .check{background:var(--c)}
+.task.done .check::after{content:"";width:10px;height:6px;border-left:2px solid var(--surface);border-bottom:2px solid var(--surface);transform:rotate(-45deg) translate(1px,-1px)}
+.t-body{min-width:0;display:flex;flex-direction:column;gap:4px}
+.t-title{font-weight:600;overflow-wrap:anywhere}
+.t-meta{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:.82rem;color:var(--muted);align-items:center}
+.t-notes{font-size:.85rem;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.cat{font-size:.72rem;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--cb);color:var(--c)}
+.cat.estudio{--c:var(--estudio);--cb:var(--estudio-bg)} .cat.trabajo{--c:var(--trabajo);--cb:var(--trabajo-bg)} .cat.personal{--c:var(--personal);--cb:var(--personal-bg)}
+.prio{font-size:.75rem;font-weight:600}
+.prio.alta{color:var(--late)}
+.count{font-family:var(--f-mono);font-size:.8rem;padding:3px 9px;border-radius:6px;white-space:nowrap;background:var(--bg);color:var(--muted);text-align:right}
+.count.late{background:var(--late-bg);color:var(--late)}
+.count.soon{background:var(--soon-bg);color:var(--soon)}
+.count.done{color:var(--ok)}
+.t-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.icon-btn{border:0;background:transparent;color:var(--muted);font-size:.8rem;padding:2px 4px;text-decoration:underline;text-underline-offset:2px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px;color:var(--muted)}
+@media (max-width:520px){.task{grid-template-columns:auto minmax(0,1fr)}.t-side{grid-column:2;flex-direction:row;align-items:center;justify-content:space-between}}
+
+/* mi día */
+.day-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.day-nav{display:flex;gap:6px;align-items:center}
+.day-nav input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px}
+.day-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.day-grid{grid-template-columns:minmax(0,1fr)}}
+.hours{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.hour{display:grid;grid-template-columns:76px minmax(0,1fr);border-top:1px solid var(--line)}
+.hour:first-child{border-top:0}
+.hour.now{background:var(--now)}
+.hour .h{font-family:var(--f-mono);font-size:.76rem;white-space:nowrap;color:var(--muted);padding:10px 0 0 12px}
+.hour.now .h{color:var(--ink);font-weight:700}
+.hour .slot{display:flex;flex-direction:column;gap:4px;padding:6px 10px 6px 0;min-width:0}
+.hour textarea{width:100%;border:0;background:transparent;resize:none;padding:4px 6px;border-radius:6px;min-height:32px;line-height:1.4;field-sizing:content}
+.hour textarea:focus{background:var(--bg);outline:none;box-shadow:inset 0 0 0 1px var(--line)}
+.hour textarea::placeholder{color:var(--muted);opacity:.5}
+.due-pill{font-size:.78rem;font-weight:600;align-self:flex-start;padding:2px 8px;border-radius:6px;background:var(--cb);color:var(--c);overflow-wrap:anywhere}
+.due-pill.estudio{--c:var(--estudio);--cb:var(--estudio-bg)} .due-pill.trabajo{--c:var(--trabajo);--cb:var(--trabajo-bg)} .due-pill.personal{--c:var(--personal);--cb:var(--personal-bg)}
+.side{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.mini{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;align-items:baseline}
+.mini span:first-child{min-width:0;overflow-wrap:anywhere}
+.panel textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px;min-height:90px;resize:vertical}
+
+/* semana */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+@media (max-width:860px){.week{grid-template-columns:minmax(0,1fr)}}
+.wday{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:6px;min-height:120px;text-align:left}
+.wday.is-today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.wday .wd{display:flex;justify-content:space-between;align-items:baseline}
+.wday .wd b{font-family:var(--f-display);font-size:1.3rem}
+.wday ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.wday li{font-size:.8rem;padding:3px 6px;border-radius:5px;background:var(--cb);color:var(--c);overflow-wrap:anywhere}
+.wday li.estudio{--c:var(--estudio);--cb:var(--estudio-bg)} .wday li.trabajo{--c:var(--trabajo);--cb:var(--trabajo-bg)} .wday li.personal{--c:var(--personal);--cb:var(--personal-bg)}
+.wday li.done{text-decoration:line-through;opacity:.6}
+.wday .logged{font-size:.75rem;color:var(--muted);margin-top:auto}
+
+/* formulario */
+.sheet{position:fixed;inset:0;background:rgb(10 14 22 / .45);display:grid;place-items:center;padding:16px;z-index:10}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(520px,100%);max-height:calc(100% - 20px);overflow:auto;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{flex:1;min-width:90px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;border:1px solid var(--line);border-radius:8px;padding:7px 6px;font-weight:600;font-size:.88rem;cursor:pointer}
+.seg input:checked+span{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));border-radius:999px;padding:13px 20px;box-shadow:0 6px 20px rgb(0 0 0 / .18);z-index:5}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:.88rem;z-index:20;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.task,.wday{transition:opacity .2s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Mi agenda</h1>
+      <div class="today" id="todayLabel"></div>
+    </div>
+    <div class="head-actions">
+      <button class="btn primary" data-install hidden>Instalar app</button>
+      <a class="switch" href="finanzas.html">Mis finanzas →</a>
+      <div class="save-note" id="saveNote" style="width:100%;text-align:right">Abriendo tu agenda…</div>
+    </div>
+  </header>
+
+  <section class="summary" id="summary" aria-label="Resumen"></section>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button role="tab" id="tab-tareas" aria-selected="true" data-tab="tareas">Tareas</button>
+    <button role="tab" id="tab-dia" aria-selected="false" data-tab="dia">Mi día</button>
+    <button role="tab" id="tab-semana" aria-selected="false" data-tab="semana">Semana</button>
+    <button role="tab" id="tab-apariencia" aria-selected="false" data-tab="apariencia">Apariencia</button>
+  </nav>
+
+  <!-- TAREAS -->
+  <section id="view-tareas" class="group">
+    <div class="row spread">
+      <div class="chips" id="catFilter" aria-label="Filtrar por tipo">
+        <button class="chip" data-cat="todas" aria-pressed="true">Todas</button>
+        <button class="chip" data-cat="estudio" aria-pressed="false">Estudio</button>
+        <button class="chip" data-cat="trabajo" aria-pressed="false">Trabajo</button>
+        <button class="chip" data-cat="personal" aria-pressed="false">Personal</button>
+      </div>
+      <label class="row muted" style="font-size:.88rem"><input type="checkbox" id="showDone"> Mostrar entregadas</label>
+    </div>
+    <div id="taskList" class="group"></div>
+  </section>
+
+  <!-- MI DÍA -->
+  <section id="view-dia" hidden>
+    <div class="group">
+      <div class="day-head">
+        <h2 id="dayTitle"></h2>
+        <div class="day-nav">
+          <button class="btn" id="dayPrev" aria-label="Día anterior">‹</button>
+          <input type="date" id="dayPick" aria-label="Elegir día">
+          <button class="btn" id="dayNext" aria-label="Día siguiente">›</button>
+          <button class="btn ghost" id="dayToday">Hoy</button>
+        </div>
+      </div>
+      <div class="day-grid">
+        <div class="hours" id="hours"></div>
+        <div class="side">
+          <div class="panel">
+            <h3>Entregas de este día</h3>
+            <div id="dayDue"></div>
+          </div>
+          <div class="panel">
+            <h3>Lo más urgente</h3>
+            <div id="dayUrgent"></div>
+          </div>
+          <div class="panel">
+            <label class="label" for="dayNotes">Notas del día</label>
+            <textarea id="dayNotes" placeholder="Pendientes sueltos, ideas, cosas para mañana…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEMANA -->
+  <section id="view-semana" hidden>
+    <div class="group">
+      <div class="day-head">
+        <h2 id="weekTitle"></h2>
+        <div class="day-nav">
+          <button class="btn" id="weekPrev" aria-label="Semana anterior">‹</button>
+          <button class="btn ghost" id="weekNow">Esta semana</button>
+          <button class="btn" id="weekNext" aria-label="Semana siguiente">›</button>
+        </div>
+      </div>
+      <div class="week" id="week"></div>
+      <p class="muted" style="font-size:.85rem;margin:0">Toca un día para abrir su registro hora a hora.</p>
+    </div>
+  </section>
+
+  <!-- APARIENCIA -->
+  <section id="view-apariencia" hidden>
+    <div class="ap-grid">
+      <div class="panel">
+        <h2>Colores</h2>
+        <div class="swatches" id="swatches"></div>
+        <span class="label" style="margin-top:6px">Modo</span>
+        <div class="seg" id="modeSeg">
+          <label><input type="radio" name="mode" value="auto" id="mAuto" checked><span>Como el celular</span></label>
+          <label><input type="radio" name="mode" value="light" id="mLight"><span>Claro</span></label>
+          <label><input type="radio" name="mode" value="dark" id="mDark"><span>Oscuro</span></label>
+        </div>
+        <p class="muted" style="margin:0;font-size:.85rem">Tu elección se guarda en tu cuenta y se aplica en todos tus dispositivos.</p>
+      </div>
+      <div class="side">
+      <div class="panel">
+        <h2>Instalar en el celular</h2>
+        <ol class="steps">
+          <li>Abre esta página en <b>Chrome</b> (Android) o <b>Safari</b> (iPhone).</li>
+          <li>Toca <b>Instalar app</b> arriba, o en el menú ⋮ de Chrome toca <b>Instalar aplicación</b>. En Safari toca Compartir y luego <b>Agregar a inicio</b>.</li>
+          <li>Queda el ícono rosado <b>Mi Control</b> en tu pantalla y funciona aunque no tengas internet.</li>
+        </ol>
+        <p class="muted" style="margin:0;font-size:.85rem">Tus tareas y finanzas se guardan solo en este celular. Nadie más las ve.</p>
+      </div>
+      <div class="panel">
+        <h2>Copia de seguridad</h2>
+        <p class="muted" style="margin:0;font-size:.88rem">Si cambias de celular o borras los datos del navegador, se pierde lo guardado. Descarga una copia de vez en cuando (por ejemplo, cada domingo) y guárdala en tu Drive o correo.</p>
+        <div class="row">
+          <button class="btn primary" id="bkDown" type="button">Descargar copia</button>
+          <label class="btn" for="bkFile" style="cursor:pointer">Restaurar copia</label>
+          <input type="file" id="bkFile" accept="application/json,.json" hidden>
+        </div>
+        <div class="row" id="bkConfirm" hidden>
+          <span id="bkMsg"></span>
+          <button class="btn danger" id="bkYes" type="button">Sí, restaurar</button>
+          <button class="btn ghost" id="bkNo" type="button">Cancelar</button>
+        </div>
+        <p class="muted" id="bkLast" style="margin:0;font-size:.8rem"></p>
+      </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<button class="btn primary fab" id="addBtn">+ Nueva tarea</button>
+
+<div class="sheet" id="sheet" hidden>
+  <form class="form" id="taskForm" novalidate>
+    <h2 id="formTitle">Nueva tarea</h2>
+    <div class="field">
+      <label class="label" for="fTitle">¿Qué tienes que hacer?</label>
+      <input id="fTitle" required maxlength="160" placeholder="Ej: Taller de estadística, informe de cartera…">
+    </div>
+    <div class="field">
+      <span class="label">Tipo</span>
+      <div class="seg">
+        <label><input type="radio" name="cat" value="estudio" id="fCatE" checked><span>Estudio</span></label>
+        <label><input type="radio" name="cat" value="trabajo" id="fCatT"><span>Trabajo</span></label>
+        <label><input type="radio" name="cat" value="personal" id="fCatP"><span>Personal</span></label>
+      </div>
+    </div>
+    <div class="two">
+      <div class="field"><label class="label" for="fDate">Fecha de entrega</label><input type="date" id="fDate" required></div>
+      <div class="field"><label class="label" for="fTime">Hora</label><input type="time" id="fTime" value="23:59"></div>
+    </div>
+    <div class="field">
+      <span class="label">Prioridad</span>
+      <div class="seg">
+        <label><input type="radio" name="prio" value="alta" id="fPA"><span>Alta</span></label>
+        <label><input type="radio" name="prio" value="media" id="fPM" checked><span>Media</span></label>
+        <label><input type="radio" name="prio" value="baja" id="fPB"><span>Baja</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label" for="fNotes">Notas (materia, jefe, link, lo que falta…)</label>
+      <textarea id="fNotes" rows="3"></textarea>
+    </div>
+    <p class="muted" id="formError" style="margin:0;color:var(--late)" hidden></p>
+    <div class="row spread">
+      <button type="button" class="btn danger ghost" id="fDelete" hidden>Eliminar</button>
+      <div class="row" style="margin-left:auto">
+        <button type="button" class="btn ghost" id="fCancel">Cancelar</button>
+        <button type="submit" class="btn primary" id="fSave">Guardar</button>
+      </div>
+    </div>
+    <div class="row" id="confirmDel" hidden>
+      <span>¿Eliminar esta tarea para siempre?</span>
+      <button type="button" class="btn danger" id="fDeleteYes">Sí, eliminar</button>
+      <button type="button" class="btn ghost" id="fDeleteNo">No</button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const HOURS_FROM = 5, HOURS_TO = 23;
+const CAT_NAME = {estudio:"Estudio", trabajo:"Trabajo", personal:"Personal"};
+const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const DIAS_C = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseYmd = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const dueDate = t => { const d = parseYmd(t.date); const [h,m] = (t.time||"23:59").split(":").map(Number); d.setHours(h,m,0,0); return d; };
+const longDate = d => DIAS[d.getDay()]+" "+d.getDate()+" de "+MESES[d.getMonth()];
+const hora12 = t => { if(!t) return ""; let [h,m] = t.split(":").map(Number); const ap = h<12?"a. m.":"p. m."; h = h%12||12; return h+":"+pad(m)+" "+ap; };
+const newId = () => "t"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+function countdown(t, now){
+  if (t.done) return {txt:"Entregada", cls:"done"};
+  const ms = dueDate(t) - now, abs = Math.abs(ms);
+  const min = Math.floor(abs/60000), h = Math.floor(min/60), d = Math.floor(h/24);
+  let span;
+  if (min < 60) span = min+" min";
+  else if (h < 24) span = h+" h"+(min%60? " "+(min%60)+" min":"");
+  else span = d+(d===1?" día":" días")+(h%24? " "+(h%24)+" h":"");
+  if (ms < 0) return {txt:"Vencida hace "+span, cls:"late"};
+  if (ms < 864e5) return {txt:"Faltan "+span, cls:"late"};
+  if (ms < 3*864e5) return {txt:"Faltan "+span, cls:"soon"};
+  return {txt:"Faltan "+span, cls:""};
+}
+
+/* ---------- almacenamiento ---------- */
+const LS_KEY = "mi-agenda-v1";
+function lsRead(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || {tasks:{},days:{}}; } catch(e){ return {tasks:{},days:{}}; } }
+function lsWrite(s){ try { localStorage.setItem(LS_KEY, JSON.stringify(s)); return true; } catch(e){ return false; } }
+
+const localBackend = {
+  kind:"local",
+  subPrefs(cb){ return ()=>{}; },
+  async savePrefs(a){},
+  async saveTask(t){ const s = lsRead(); s.tasks[t.id] = t; lsWrite(s); this._tcb && this._tcb(Object.values(s.tasks)); },
+  async delTask(id){ const s = lsRead(); delete s.tasks[id]; lsWrite(s); this._tcb && this._tcb(Object.values(s.tasks)); },
+  subDay(date, cb){ cb(lsRead().days[date] || null); return ()=>{}; },
+  async saveDay(date, body){ const s = lsRead(); s.days[date] = body; lsWrite(s); },
+  async dayRange(dates){ const s = lsRead(); const o = {}; dates.forEach(d => { if (s.days[d]) o[d] = s.days[d]; }); return o; }
+};
+localBackend.subTasks = function(cb){ this._tcb = cb; cb(Object.values(lsRead().tasks)); return ()=>{}; };
+
+function dbBackend(db, uid){
+  const root = db.doc("data/users/"+uid+"/agenda");
+  const tasks = root.collection("tareas");
+  const days = root.collection("dias");
+  return {
+    kind:"db",
+    subPrefs(cb){ return root.onSnapshot(s => cb(s.exists && s.data().apariencia || null), () => {}); },
+    savePrefs(a){ return root.set({apariencia:a}); },
+    subTasks(cb){ return tasks.onSnapshot(s => cb(s.docs.map(d => ({...d.data(), id:d.id}))), e => showToast("No se pudieron cargar las tareas. Recarga la página.")); },
+    saveTask(t){ const {id, ...body} = t; return tasks.doc(id).set(body); },
+    delTask(id){ return tasks.doc(id).delete(); },
+    subDay(date, cb){ return days.doc(date).onSnapshot(s => cb(s.exists ? s.data() : null), () => {}); },
+    saveDay(date, body){ return days.doc(date).set(body); },
+    async dayRange(dates){ const snap = await days.where("date","in",dates).get(); const o = {}; snap.docs.forEach(d => o[d.id] = d.data()); return o; }
+  };
+}
+
+/* ---------- estado ---------- */
+const state = {
+  tasks: [], loaded:false, tab:"tareas", cat:"todas", showDone:false,
+  day: ymd(new Date()), dayData:null, weekStart: mondayOf(new Date()), weekLogs:{}
+};
+let store = null, unsubDay = null;
+function mondayOf(d){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const wd = (x.getDay()+6)%7; return addDays(x,-wd); }
+
+function showToast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(showToast._t); showToast._t = setTimeout(()=> t.hidden = true, 2600); }
+
+/* ---------- ejemplos (solo se muestran cuando no hay tareas) ---------- */
+function examples(){
+  const n = new Date();
+  return [
+    {id:"ej1", title:"Ejemplo: parcial de contabilidad de costos", cat:"estudio", date:ymd(addDays(n,1)), time:"07:00", prio:"alta", notes:"Repasar capítulos 3 y 4", done:false, example:true},
+    {id:"ej2", title:"Ejemplo: conciliación bancaria del mes", cat:"trabajo", date:ymd(addDays(n,3)), time:"17:00", prio:"media", notes:"", done:false, example:true},
+    {id:"ej3", title:"Ejemplo: pagar la matrícula", cat:"personal", date:ymd(addDays(n,9)), time:"12:00", prio:"alta", notes:"", done:false, example:true}
+  ];
+}
+
+/* ---------- render ---------- */
+function render(){
+  const now = new Date();
+  $("#todayLabel").textContent = "Hoy es "+longDate(now)+" · "+hora12(pad(now.getHours())+":"+pad(now.getMinutes()));
+  renderSummary(now);
+  if (state.tab === "tareas") renderTasks(now);
+  if (state.tab === "dia") renderDay(now);
+  if (state.tab === "semana") renderWeek(now);
+}
+
+function pending(){ return state.tasks.filter(t => !t.done); }
+
+function renderSummary(now){
+  const p = pending();
+  const late = p.filter(t => dueDate(t) < now);
+  const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+  const today = p.filter(t => dueDate(t) >= now && dueDate(t) <= todayEnd);
+  const weekEnd = addDays(todayEnd, 7);
+  const week = p.filter(t => dueDate(t) > todayEnd && dueDate(t) <= weekEnd);
+  const next = p.filter(t => dueDate(t) >= now).sort((a,b)=> dueDate(a)-dueDate(b))[0];
+  const el = $("#summary"); el.textContent = "";
+  const stat = (n, label, cls, sub) => {
+    const d = document.createElement("div"); d.className = "stat "+(cls||"");
+    const b = document.createElement("b"); b.textContent = n;
+    const s = document.createElement("span"); s.className = "label"; s.textContent = label;
+    d.append(s, b);
+    if (sub){ const sm = document.createElement("small"); sm.textContent = sub; d.append(sm); }
+    el.append(d);
+  };
+  stat(late.length, "Vencidas", late.length ? "late" : "", late.length ? "Ponte al día con estas" : "Nada atrasado");
+  stat(today.length, "Para hoy", today.length ? "soon" : "", today.length ? today.map(t=>t.title).join(", ") : "Sin entregas hoy");
+  stat(week.length, "Próximos 7 días", "", "");
+  stat(next ? countdown(next, now).txt.replace("Faltan ","") : "—", "Siguiente entrega", "", next ? next.title : "No hay entregas pendientes");
+}
+
+function taskEl(t, now){
+  const card = document.createElement("article");
+  card.className = "task "+t.cat+(t.done?" done":"")+(t.example?" example":"");
+  const chk = document.createElement("button");
+  chk.className = "check"; chk.type = "button";
+  chk.setAttribute("aria-label", t.done ? "Marcar como pendiente" : "Marcar como entregada");
+  chk.onclick = () => t.example ? showToast("Es un ejemplo. Crea tu primera tarea con + Nueva tarea") : toggleDone(t);
+  const body = document.createElement("div"); body.className = "t-body";
+  const title = document.createElement("div"); title.className = "t-title"; title.textContent = t.title;
+  const meta = document.createElement("div"); meta.className = "t-meta";
+  const cat = document.createElement("span"); cat.className = "cat "+t.cat; cat.textContent = CAT_NAME[t.cat];
+  const when = document.createElement("span"); const d = dueDate(t);
+  when.textContent = DIAS_C[d.getDay()]+" "+d.getDate()+" "+MESES[d.getMonth()].slice(0,3)+" · "+hora12(t.time);
+  meta.append(cat, when);
+  if (t.prio === "alta"){ const p = document.createElement("span"); p.className = "prio alta"; p.textContent = "Prioridad alta"; meta.append(p); }
+  else if (t.prio === "baja"){ const p = document.createElement("span"); p.className = "prio"; p.textContent = "Prioridad baja"; meta.append(p); }
+  body.append(title, meta);
+  if (t.notes){ const n = document.createElement("div"); n.className = "t-notes"; n.textContent = t.notes; body.append(n); }
+  const side = document.createElement("div"); side.className = "t-side";
+  const c = countdown(t, now);
+  const cd = document.createElement("span"); cd.className = "count "+c.cls; cd.textContent = c.txt;
+  side.append(cd);
+  if (!t.example){ const e = document.createElement("button"); e.className = "icon-btn"; e.type = "button"; e.textContent = "Editar"; e.onclick = () => openForm(t); side.append(e); }
+  card.append(chk, body, side);
+  return card;
+}
+
+function renderTasks(now){
+  const list = $("#taskList"); list.textContent = "";
+  if (!state.loaded){ const e = document.createElement("div"); e.className = "empty"; e.textContent = "Cargando tus tareas…"; list.append(e); return; }
+  let tasks = state.tasks;
+  const isExample = tasks.length === 0;
+  if (isExample){
+    const e = document.createElement("div"); e.className = "empty";
+    e.textContent = "Aún no tienes tareas. Así se verán (son ejemplos y no se guardan). Agrega la primera con el botón + Nueva tarea.";
+    list.append(e);
+    tasks = examples();
+  }
+  tasks = tasks.filter(t => state.cat === "todas" || t.cat === state.cat);
+  const open = tasks.filter(t => !t.done).sort((a,b)=> dueDate(a)-dueDate(b) || prioRank(a)-prioRank(b));
+  const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+  const groups = [
+    ["Vencidas", open.filter(t => dueDate(t) < now)],
+    ["Hoy", open.filter(t => dueDate(t) >= now && dueDate(t) <= todayEnd)],
+    ["Próximos 7 días", open.filter(t => dueDate(t) > todayEnd && dueDate(t) <= addDays(todayEnd,7))],
+    ["Más adelante", open.filter(t => dueDate(t) > addDays(todayEnd,7))]
+  ];
+  if (state.showDone) groups.push(["Entregadas", tasks.filter(t => t.done).sort((a,b)=> dueDate(b)-dueDate(a))]);
+  let any = false;
+  for (const [name, items] of groups){
+    if (!items.length) continue; any = true;
+    const g = document.createElement("div"); g.className = "group";
+    const h = document.createElement("div"); h.className = "group-title";
+    const h3 = document.createElement("h3"); h3.textContent = name;
+    const n = document.createElement("span"); n.className = "muted mono"; n.textContent = items.length;
+    h.append(h3, n); g.append(h);
+    items.forEach(t => g.append(taskEl(t, now)));
+    list.append(g);
+  }
+  if (!any && !isExample){ const e = document.createElement("div"); e.className = "empty"; e.textContent = state.cat === "todas" ? "No tienes nada pendiente. ¡Bien!" : "No hay tareas pendientes de "+CAT_NAME[state.cat]+"."; list.append(e); }
+}
+const prioRank = t => ({alta:0, media:1, baja:2})[t.prio] ?? 1;
+
+/* ---------- mi día ---------- */
+function renderDay(now){
+  const d = parseYmd(state.day);
+  const isToday = state.day === ymd(now);
+  $("#dayTitle").textContent = (isToday ? "Hoy, " : "") + longDate(d);
+  $("#dayPick").value = state.day;
+  const slots = (state.dayData && state.dayData.slots) || {};
+  const dueToday = state.tasks.filter(t => t.date === state.day);
+  const box = $("#hours");
+  const focused = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.h;
+  if (box.dataset.day !== state.day || !box.children.length){
+    box.textContent = ""; box.dataset.day = state.day;
+    for (let h = HOURS_FROM; h <= HOURS_TO; h++){
+      const k = pad(h);
+      const row = document.createElement("div"); row.className = "hour"; row.dataset.row = k;
+      const lab = document.createElement("label"); lab.className = "h"; lab.htmlFor = "slot-"+k; lab.textContent = hora12(k+":00").replace(":00","");
+      const slot = document.createElement("div"); slot.className = "slot";
+      const pills = document.createElement("div"); pills.className = "pills"; pills.style.display = "contents";
+      const ta = document.createElement("textarea"); ta.id = "slot-"+k; ta.dataset.h = k; ta.rows = 1;
+      ta.placeholder = "¿Qué hiciste o qué vas a hacer?";
+      ta.addEventListener("input", () => queueDaySave());
+      slot.append(pills, ta); row.append(lab, slot); box.append(row);
+    }
+  }
+  for (const row of box.children){
+    const k = row.dataset.row;
+    row.classList.toggle("now", isToday && Number(k) === now.getHours());
+    const ta = row.querySelector("textarea");
+    if (focused !== k && !dirtyDay) ta.value = slots[k] || "";
+    const pills = row.querySelector(".pills"); pills.textContent = "";
+    dueToday.filter(t => Number((t.time||"23:59").slice(0,2)) === Number(k) || (Number(k) === HOURS_TO && Number((t.time||"23:59").slice(0,2)) > HOURS_TO) || (Number(k) === HOURS_FROM && Number((t.time||"23:59").slice(0,2)) < HOURS_FROM))
+      .forEach(t => { const p = document.createElement("span"); p.className = "due-pill "+t.cat; p.textContent = (t.done?"✓ ":"Entrega ")+hora12(t.time)+": "+t.title; pills.append(p); });
+  }
+  if (document.activeElement !== $("#dayNotes") && !dirtyDay) $("#dayNotes").value = (state.dayData && state.dayData.notes) || "";
+
+  const dd = $("#dayDue"); dd.textContent = "";
+  if (!dueToday.length){ const p = document.createElement("div"); p.className = "muted"; p.textContent = "Nada para entregar este día."; dd.append(p); }
+  dueToday.sort((a,b)=> dueDate(a)-dueDate(b)).forEach(t => dd.append(miniRow(t, now)));
+  const du = $("#dayUrgent"); du.textContent = "";
+  const urg = pending().sort((a,b)=> dueDate(a)-dueDate(b)).slice(0,5);
+  if (!urg.length){ const p = document.createElement("div"); p.className = "muted"; p.textContent = "No tienes tareas pendientes."; du.append(p); }
+  urg.forEach(t => du.append(miniRow(t, now)));
+}
+function miniRow(t, now){
+  const r = document.createElement("div"); r.className = "mini";
+  const a = document.createElement("span"); a.textContent = t.title;
+  const c = countdown(t, now); const b = document.createElement("span"); b.className = "count "+c.cls; b.textContent = c.txt;
+  r.append(a, b); return r;
+}
+
+let dirtyDay = false, daySaveTimer = null, daySaving = Promise.resolve();
+function collectDay(){
+  const slots = {};
+  document.querySelectorAll("#hours textarea").forEach(ta => { if (ta.value.trim()) slots[ta.dataset.h] = ta.value; });
+  return {date: state.day, slots, notes: $("#dayNotes").value, updatedAt: new Date().toISOString()};
+}
+function queueDaySave(){
+  dirtyDay = true; $("#saveNote").textContent = "Guardando…";
+  clearTimeout(daySaveTimer);
+  daySaveTimer = setTimeout(flushDay, 800);
+}
+function flushDay(){
+  if (!dirtyDay || !store) return daySaving;
+  clearTimeout(daySaveTimer);
+  const date = state.day, body = collectDay();
+  dirtyDay = false;
+  daySaving = daySaving.then(() => store.saveDay(date, body)).then(() => {
+    state.weekLogs[date] = body; setSavedNote();
+  }).catch(() => { $("#saveNote").textContent = "No se pudo guardar. Revisa tu conexión."; });
+  return daySaving;
+}
+function setSavedNote(){
+  $("#saveNote").textContent = store && store.kind === "db" ? "Todo guardado en tu cuenta" : "Guardado en este celular";
+}
+async function goDay(date){
+  await flushDay();
+  state.day = date; state.dayData = null;
+  if (unsubDay) unsubDay();
+  unsubDay = store ? store.subDay(date, data => { state.dayData = data; if (state.tab === "dia") renderDay(new Date()); }) : null;
+  renderDay(new Date());
+}
+
+/* ---------- semana ---------- */
+async function renderWeek(now){
+  const ws = state.weekStart; const we = addDays(ws, 6);
+  $("#weekTitle").textContent = "Semana del "+ws.getDate()+" de "+MESES[ws.getMonth()]+" al "+we.getDate()+" de "+MESES[we.getMonth()];
+  const dates = Array.from({length:7}, (_,i) => ymd(addDays(ws,i)));
+  const box = $("#week"); box.textContent = "";
+  dates.forEach((ds, i) => {
+    const d = parseYmd(ds);
+    const btn = document.createElement("button"); btn.type = "button";
+    btn.className = "wday"+(ds === ymd(now) ? " is-today" : "");
+    btn.onclick = () => { setTab("dia"); goDay(ds); };
+    const wd = document.createElement("div"); wd.className = "wd";
+    const l = document.createElement("span"); l.className = "label"; l.textContent = DIAS_C[d.getDay()];
+    const b = document.createElement("b"); b.textContent = d.getDate();
+    wd.append(l, b);
+    const ul = document.createElement("ul");
+    state.tasks.filter(t => t.date === ds).sort((a,b)=> dueDate(a)-dueDate(b)).forEach(t => {
+      const li = document.createElement("li"); li.className = t.cat+(t.done?" done":""); li.textContent = hora12(t.time)+" · "+t.title; ul.append(li);
+    });
+    const lg = document.createElement("div"); lg.className = "logged";
+    const log = state.weekLogs[ds]; const n = log && log.slots ? Object.keys(log.slots).length : 0;
+    lg.textContent = n ? n+(n===1?" hora registrada":" horas registradas") : "Sin registro";
+    btn.append(wd, ul, lg); box.append(btn);
+  });
+  if (store && !renderWeek._busy){
+    renderWeek._busy = true;
+    try {
+      const logs = await store.dayRange(dates);
+      let changed = false;
+      dates.forEach(ds => { const v = logs[ds] || null; if (JSON.stringify(v) !== JSON.stringify(state.weekLogs[ds] || null)){ state.weekLogs[ds] = v; changed = true; } });
+      renderWeek._busy = false;
+      if (changed && state.tab === "semana") renderWeek(new Date());
+    } catch(e){ renderWeek._busy = false; }
+  }
+}
+
+/* ---------- acciones ---------- */
+async function toggleDone(t){
+  const nt = {...t, done:!t.done, doneAt: !t.done ? new Date().toISOString() : null};
+  try { await store.saveTask(nt); showToast(nt.done ? "¡Entregada! Bien hecho" : "Marcada como pendiente"); }
+  catch(e){ showToast("No se pudo guardar el cambio."); }
+}
+
+let editing = null;
+function openForm(t){
+  editing = t || null;
+  $("#formTitle").textContent = t ? "Editar tarea" : "Nueva tarea";
+  $("#fTitle").value = t ? t.title : "";
+  $("#fDate").value = t ? t.date : (state.tab === "dia" ? state.day : ymd(addDays(new Date(),1)));
+  $("#fTime").value = t ? (t.time || "23:59") : "23:59";
+  const cat = t ? t.cat : (state.cat !== "todas" ? state.cat : "estudio");
+  document.querySelector('input[name="cat"][value="'+cat+'"]').checked = true;
+  document.querySelector('input[name="prio"][value="'+(t ? t.prio : "media")+'"]').checked = true;
+  $("#fNotes").value = t ? (t.notes || "") : "";
+  $("#fDelete").hidden = !t; $("#confirmDel").hidden = true; $("#formError").hidden = true;
+  $("#sheet").hidden = false;
+  setTimeout(() => $("#fTitle").focus(), 30);
+}
+function closeForm(){ $("#sheet").hidden = true; editing = null; }
+
+$("#taskForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const title = $("#fTitle").value.trim(), date = $("#fDate").value;
+  if (!title || !date){ const e = $("#formError"); e.textContent = !title ? "Escribe el nombre de la tarea." : "Elige la fecha de entrega."; e.hidden = false; return; }
+  if (!store){ $("#formError").textContent = "Tu agenda aún se está abriendo. Intenta de nuevo en un momento."; $("#formError").hidden = false; return; }
+  const t = {
+    id: editing ? editing.id : newId(),
+    title, date, time: $("#fTime").value || "23:59",
+    cat: document.querySelector('input[name="cat"]:checked').value,
+    prio: document.querySelector('input[name="prio"]:checked').value,
+    notes: $("#fNotes").value.trim(),
+    done: editing ? !!editing.done : false,
+    doneAt: editing ? (editing.doneAt || null) : null,
+    createdAt: editing ? (editing.createdAt || new Date().toISOString()) : new Date().toISOString()
+  };
+  $("#fSave").disabled = true;
+  const wasEditing = !!editing;
+  try { await store.saveTask(t); closeForm(); showToast(wasEditing ? "Tarea actualizada" : "Tarea guardada"); }
+  catch(e){ const er = $("#formError"); er.textContent = e && e.code === "quota_exceeded" ? "Se llenó el espacio. Elimina tareas viejas y vuelve a intentar." : "No se pudo guardar. Revisa tu conexión e intenta de nuevo."; er.hidden = false; }
+  finally { $("#fSave").disabled = false; }
+});
+$("#fCancel").onclick = closeForm;
+$("#sheet").addEventListener("click", e => { if (e.target === $("#sheet")) closeForm(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#sheet").hidden) closeForm(); });
+$("#fDelete").onclick = () => { $("#confirmDel").hidden = false; };
+$("#fDeleteNo").onclick = () => { $("#confirmDel").hidden = true; };
+$("#fDeleteYes").onclick = async () => {
+  if (!editing) return;
+  try { await store.delTask(editing.id); closeForm(); showToast("Tarea eliminada"); }
+  catch(e){ showToast("No se pudo eliminar."); }
+};
+$("#addBtn").onclick = () => openForm(null);
+
+function setTab(tab){
+  if (state.tab === "dia" && tab !== "dia") flushDay();
+  state.tab = tab;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  $("#view-tareas").hidden = tab !== "tareas";
+  $("#view-dia").hidden = tab !== "dia";
+  $("#view-semana").hidden = tab !== "semana";
+  $("#view-apariencia").hidden = tab !== "apariencia";
+  try { localStorage.setItem("mi-agenda-tab", tab); } catch(e){}
+  render();
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+document.querySelectorAll("#catFilter .chip").forEach(b => b.onclick = () => {
+  state.cat = b.dataset.cat;
+  document.querySelectorAll("#catFilter .chip").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+});
+$("#showDone").onchange = e => { state.showDone = e.target.checked; render(); };
+$("#dayPrev").onclick = () => goDay(ymd(addDays(parseYmd(state.day),-1)));
+$("#dayNext").onclick = () => goDay(ymd(addDays(parseYmd(state.day),1)));
+$("#dayToday").onclick = () => goDay(ymd(new Date()));
+$("#dayPick").onchange = e => { if (e.target.value) goDay(e.target.value); };
+$("#dayNotes").addEventListener("input", () => queueDaySave());
+$("#weekPrev").onclick = () => { state.weekStart = addDays(state.weekStart,-7); render(); };
+$("#weekNext").onclick = () => { state.weekStart = addDays(state.weekStart,7); render(); };
+$("#weekNow").onclick = () => { state.weekStart = mondayOf(new Date()); render(); };
+window.addEventListener("pagehide", () => flushDay());
+document.addEventListener("visibilitychange", () => { if (document.hidden) flushDay(); else render(); });
+
+/* reloj: refresca cuentas regresivas cada minuto (solo pantalla, no guarda nada) */
+setInterval(() => { if (state.tab !== "dia" || !document.activeElement || !document.activeElement.dataset || !document.activeElement.dataset.h) render(); }, 60000);
+
+
+/* ---------- apariencia ---------- */
+const PALETTES = [
+  {k:"rosa", name:"Rosa", dots:["#fcf1f5","#d63f7d","#ff8cbd"]},
+  {k:"lavanda", name:"Lavanda", dots:["#f5f2fc","#7b52d6","#b49bff"]},
+  {k:"durazno", name:"Durazno", dots:["#fdf4ef","#d65a3c","#ff9a7f"]},
+  {k:"menta", name:"Menta", dots:["#f0f8f5","#14866a","#5fd6ad"]},
+  {k:"azul", name:"Azul", dots:["#f3f5f8","#2f55d4","#7c9bff"]}
+];
+const HOST_THEME = null;
+let prefs = {palette:"rosa", mode:"auto"};
+try { const c = JSON.parse(localStorage.getItem("mi-agenda-apariencia")); if (c && c.palette) prefs = {palette:c.palette, mode:c.mode||"auto"}; } catch(e){}
+function applyPrefs(){
+  const r = document.documentElement;
+  r.setAttribute("data-palette", prefs.palette);
+  if (prefs.mode === "light" || prefs.mode === "dark") r.setAttribute("data-theme", prefs.mode);
+  else if (HOST_THEME) r.setAttribute("data-theme", HOST_THEME);
+  else r.removeAttribute("data-theme");
+  document.querySelectorAll("#swatches .sw").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === prefs.palette)));
+  const m = document.querySelector('input[name="mode"][value="'+prefs.mode+'"]'); if (m) m.checked = true;
+}
+function buildSwatches(){
+  const box = $("#swatches"); box.textContent = "";
+  PALETTES.forEach(p => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.dataset.k = p.k;
+    const dots = document.createElement("span"); dots.className = "dots";
+    p.dots.forEach(c => { const i = document.createElement("i"); i.style.background = c; dots.append(i); });
+    const n = document.createElement("span"); n.textContent = p.name;
+    b.append(dots, n); b.onclick = () => setPrefs({palette:p.k}); box.append(b);
+  });
+}
+async function setPrefs(patch){
+  prefs = {...prefs, ...patch}; applyPrefs();
+  try { localStorage.setItem("mi-agenda-apariencia", JSON.stringify(prefs)); } catch(e){}
+  if (store){ try { await store.savePrefs(prefs); } catch(e){ showToast("No se pudo guardar la apariencia en tu cuenta."); } }
+}
+document.querySelectorAll('input[name="mode"]').forEach(i => i.onchange = () => setPrefs({mode:i.value}));
+buildSwatches(); applyPrefs();
+
+/* ---------- copia de seguridad ---------- */
+const BK_KEYS = ["mi-agenda-v1","mi-agenda-apariencia","finanzas-v1"];
+function bkLastShow(){ try { const t = localStorage.getItem("mi-control-ultima-copia"); $("#bkLast").textContent = t ? "Última copia: "+new Date(t).toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"}) : "Aún no has descargado ninguna copia."; } catch(e){} }
+$("#bkDown").onclick = async () => {
+  await flushDay();
+  const data = {app:"mi-control", version:1, fecha:new Date().toISOString(), datos:{}};
+  try { BK_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v != null) data.datos[k] = v; }); } catch(e){}
+  const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mi-control-copia-"+ymd(new Date())+".json";
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  try { localStorage.setItem("mi-control-ultima-copia", new Date().toISOString()); } catch(e){}
+  bkLastShow(); showToast("Copia descargada");
+};
+let bkPending = null;
+$("#bkFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || d.app !== "mi-control" || !d.datos) throw 0;
+    bkPending = d; $("#bkMsg").textContent = "Esto reemplaza lo que tienes ahora por la copia del "+new Date(d.fecha).toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"})+".";
+    $("#bkConfirm").hidden = false;
+  } catch(x){ showToast("Ese archivo no es una copia de Mi Control."); }
+};
+$("#bkNo").onclick = () => { bkPending = null; $("#bkConfirm").hidden = true; };
+$("#bkYes").onclick = () => {
+  if (!bkPending) return;
+  try { BK_KEYS.forEach(k => { if (k in bkPending.datos) localStorage.setItem(k, bkPending.datos[k]); }); location.reload(); }
+  catch(x){ showToast("No se pudo restaurar la copia."); }
+};
+bkLastShow();
+
+/* ---------- arranque ---------- */
+async function connect(){
+  let backend = null;
+  try {
+    if (window.claude && typeof window.claude.use === "function"){
+      const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+      const uid = user ? await user.id() : null;
+      if (db && uid) backend = dbBackend(db, uid);
+    }
+  } catch(e){}
+  store = backend || localBackend;
+  setSavedNote();
+  store.subTasks(list => { state.tasks = list.filter(t => t && t.title && t.date); state.loaded = true; render(); });
+  unsubDay = store.subDay(state.day, data => { state.dayData = data; if (state.tab === "dia") renderDay(new Date()); });
+  store.subPrefs(a => { if (a && a.palette && (a.palette !== prefs.palette || a.mode !== prefs.mode)){ prefs = {palette:a.palette, mode:a.mode||"auto"}; applyPrefs(); try { localStorage.setItem("mi-agenda-apariencia", JSON.stringify(prefs)); } catch(e){} } });
+  render();
+}
+
+try { const t = localStorage.getItem("mi-agenda-tab"); if (t === "dia" || t === "semana" || t === "apariencia") state.tab = t; } catch(e){}
+setTab(state.tab);
+connect();
+})();
+</script>
+
+<script>
+/* app instalable: modo sin conexión + botón Instalar */
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+(function(){
+  let deferred = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; document.querySelectorAll("[data-install]").forEach(b => b.hidden = false); });
+  addEventListener("appinstalled", () => document.querySelectorAll("[data-install]").forEach(b => b.hidden = true));
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-install]"); if (!b || !deferred) return;
+    deferred.prompt(); try { await deferred.userChoice; } catch(x){} deferred = null; b.hidden = true;
+  });
+})();
+</script>
+</body>
+</html>
