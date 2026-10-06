@@ -1,5 +1,5 @@
 // Mi Control: guarda la app en el celular para que abra sin internet.
-const CACHE = "mi-control-v1";
+const CACHE = "mi-control-v2";
 const SHELL = ["./", "./index.html", "./finanzas.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png", "./icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
