@@ -216,6 +216,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
     <div class="head-actions">
       <button class="btn primary" data-install>Instalar app</button>
       <a class="switch" href="finanzas.html">Mis finanzas →</a>
+      <a class="switch" href="quincenas.html">Mis quincenas →</a>
       <div class="save-note" id="saveNote" style="width:100%;text-align:right">Abriendo tu agenda…</div>
     </div>
   </header>
@@ -818,7 +819,7 @@ document.querySelectorAll('input[name="mode"]').forEach(i => i.onchange = () => 
 buildSwatches(); applyPrefs();
 
 /* ---------- copia de seguridad ---------- */
-const BK_KEYS = ["mi-agenda-v1","mi-agenda-apariencia","finanzas-v1"];
+const BK_KEYS = ["mi-agenda-v1","mi-agenda-apariencia","finanzas-v1","quincenas-v1"];
 function bkLastShow(){ try { const t = localStorage.getItem("mi-control-ultima-copia"); $("#bkLast").textContent = t ? "Última copia: "+new Date(t).toLocaleDateString("es-CO",{day:"numeric",month:"long",year:"numeric"}) : "Aún no has descargado ninguna copia."; } catch(e){} }
 $("#bkDown").onclick = async () => {
   await flushDay();

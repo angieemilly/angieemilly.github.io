@@ -1,0 +1,505 @@
+<!doctype html><html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d63f7d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Control">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Mis Quincenas</title>
+<script>
+(function(){ try { const p = JSON.parse(localStorage.getItem("mi-agenda-apariencia")) || {}; const r = document.documentElement;
+  r.setAttribute("data-palette", p.palette || "rosa"); if (p.mode === "light" || p.mode === "dark") r.setAttribute("data-theme", p.mode);
+} catch(e){ document.documentElement.setAttribute("data-palette","rosa"); } })();
+</script>
+</head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: una columna tipo libreta de bolsillo; pestañas abajo en móvil, arriba en escritorio. */
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --sunken:#E3E9E5; --line:#CDD6D0;
+  --ink:#16241E; --muted:#5B6B63; --accent:#0E6B52; --accent-ink:#FFFFFF; --accent-soft:#D5EBE2;
+  --good:#1F7A4A; --warn:#A86A00; --bad:#B23A2E; --warn-soft:#F7EBD2; --bad-soft:#F6DCD8; --good-soft:#D9EEDF;
+  --vault:#3B4F86; --vault-soft:#DDE3F3;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-num:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1714; --surface:#17221E; --sunken:#1E2B26; --line:#2C3B35;
+  --ink:#E4EDE8; --muted:#97A8A0; --accent:#4CC29A; --accent-ink:#06150F; --accent-soft:#1B3A2F;
+  --good:#5BC98A; --warn:#E3A53A; --bad:#F07D6F; --warn-soft:#3A2E16; --bad-soft:#3E2220; --good-soft:#18352A;
+  --vault:#9DB0EC; --vault-soft:#232C47; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1714; --surface:#17221E; --sunken:#1E2B26; --line:#2C3B35;
+  --ink:#E4EDE8; --muted:#97A8A0; --accent:#4CC29A; --accent-ink:#06150F; --accent-soft:#1B3A2F;
+  --good:#5BC98A; --warn:#E3A53A; --bad:#F07D6F; --warn-soft:#3A2E16; --bad-soft:#3E2220; --good-soft:#18352A;
+  --vault:#9DB0EC; --vault-soft:#232C47; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:0 96px}
+.wrap{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.5rem}
+h2{font-size:1.15rem}
+h3{font-size:1rem;font-weight:500}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)}
+.small{font-size:.84rem}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 10px;flex-wrap:wrap}
+.sync{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--good)} .dot.warn{background:var(--warn)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav.tabs .in{display:flex;gap:2px;max-width:760px;width:100%}
+nav.tabs button{flex:1;min-width:0;background:none;border:0;color:var(--muted);font:600 .74rem var(--f-body);padding:8px 2px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+@media (min-width:720px){
+  body{padding-block:0 40px}
+  nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);bottom:auto;border:0;border-bottom:1px solid var(--line);background:var(--bg);padding:6px 0;margin-bottom:8px}
+  nav.tabs button{flex-direction:row;justify-content:center;font-size:.85rem;gap:6px}
+  nav.tabs button svg{width:18px;height:18px}
+}
+section.view{display:flex;flex-direction:column;gap:16px;padding-block:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.hero{background:var(--accent);color:var(--accent-ink);border:0;display:flex;flex-direction:column;gap:6px}
+.hero .label{color:inherit;opacity:.8}
+.hero .big{font-family:var(--f-num);font-size:clamp(1.8rem,7vw,2.4rem);line-height:1.1;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hero .split{display:flex;gap:16px;flex-wrap:wrap;font-size:.86rem;opacity:.92}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid3 .num{font-size:1rem!important;overflow-wrap:anywhere;white-space:normal}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.acc{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0}
+.acc:hover{border-color:var(--accent)}
+.acc .num{font-size:1.05rem}
+.acc .tag{font-size:.75rem;color:var(--muted)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.row > div{min-width:0}
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);min-width:0}
+.item:last-child{border-bottom:0}
+.item .grow{flex:1;min-width:0}
+.item .title{font-weight:600;overflow-wrap:anywhere}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;font-weight:700;font-size:.9rem}
+.ic.in{background:var(--good-soft);color:var(--good)} .ic.out{background:var(--bad-soft);color:var(--bad)} .ic.mv{background:var(--sunken);color:var(--muted)} .ic.debt{background:var(--vault-soft);color:var(--vault)}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.neutral{background:var(--sunken);color:var(--muted)} .chip.vault{background:var(--vault-soft);color:var(--vault)}
+.bar{height:8px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bar > i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.bar.vault > i{background:var(--vault)}
+.bar.warn > i{background:var(--warn)} .bar.bad > i{background:var(--bad)}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:420px){.actions{grid-template-columns:repeat(2,1fr)}}
+.qa{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 .82rem var(--f-body);cursor:pointer}
+.qa:hover{border-color:var(--accent)}
+.qa .ic{width:30px;height:30px}
+button,.btn{font:600 .88rem var(--f-body);border-radius:10px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad-soft);background:none}
+.btn.ghost{border-color:transparent;background:none;color:var(--accent);padding:6px 8px}
+.btn.sm{padding:6px 10px;font-size:.8rem}
+button:focus-visible,input:focus-visible,select:focus-visible,.acc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.empty{padding:18px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center;font-size:.9rem}
+.tip{background:var(--sunken);border-radius:12px;padding:12px 14px;font-size:.88rem}
+.tip b{font-weight:600}
+ol.steps{margin:6px 0 0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+dialog{border:0;border-radius:18px;padding:0;background:var(--surface);color:var(--ink);width:min(480px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(10,20,16,.45)}
+dialog form{display:flex;flex-direction:column;gap:12px;padding:18px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.8rem;font-weight:600;color:var(--muted)}
+.field input,.field select{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.field .money{font-family:var(--f-num);font-size:1.1rem}
+.fields2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--sunken);padding:4px;border-radius:12px}
+.seg button{border:0;background:none;padding:8px 2px;font-size:.78rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.dlg-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.dlg-actions .spacer{flex:1}
+.err{color:var(--bad);font-size:.84rem}
+.month-nav{display:flex;align-items:center;gap:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.88rem;z-index:20;max-width:calc(100vw - 32px)}
+.welcome{display:flex;flex-direction:column;gap:12px}
+.cat-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.cat-row .bar{grid-column:1 / -1}
+
+/* colores elegidos en Apariencia (menta = la paleta verde de arriba) */
+:root[data-palette="rosa"]{--bg:#fcf1f5;--surface:#ffffff;--sunken:#f6e3eb;--line:#f0d6e1;--ink:#2a1720;--muted:#7a5a68;--accent:#d63f7d;--accent-ink:#ffffff;--accent-soft:#fbdbe8;}
+@media (prefers-color-scheme: dark){:root[data-palette="rosa"]:not([data-theme="light"]){--bg:#1d1218;--surface:#281a22;--sunken:#30202a;--line:#432a37;--ink:#f6e7ee;--muted:#c09aab;--accent:#ff8cbd;--accent-ink:#2b0c1a;--accent-soft:#45202f;}}
+:root[data-palette="rosa"][data-theme="dark"]{--bg:#1d1218;--surface:#281a22;--sunken:#30202a;--line:#432a37;--ink:#f6e7ee;--muted:#c09aab;--accent:#ff8cbd;--accent-ink:#2b0c1a;--accent-soft:#45202f;}
+:root[data-palette="lavanda"]{--bg:#f5f2fc;--surface:#ffffff;--sunken:#ebe6f7;--line:#e2dbf3;--ink:#211a33;--muted:#675d80;--accent:#7b52d6;--accent-ink:#ffffff;--accent-soft:#e6dcfb;}
+@media (prefers-color-scheme: dark){:root[data-palette="lavanda"]:not([data-theme="light"]){--bg:#16131f;--surface:#201b2c;--sunken:#272136;--line:#352d48;--ink:#ece8f7;--muted:#a99fc2;--accent:#b49bff;--accent-ink:#1a1030;--accent-soft:#2e2550;}}
+:root[data-palette="lavanda"][data-theme="dark"]{--bg:#16131f;--surface:#201b2c;--sunken:#272136;--line:#352d48;--ink:#ece8f7;--muted:#a99fc2;--accent:#b49bff;--accent-ink:#1a1030;--accent-soft:#2e2550;}
+:root[data-palette="durazno"]{--bg:#fdf4ef;--surface:#ffffff;--sunken:#f7e6dc;--line:#f3ddd0;--ink:#2c1d15;--muted:#7d6255;--accent:#d65a3c;--accent-ink:#ffffff;--accent-soft:#fbdccf;}
+@media (prefers-color-scheme: dark){:root[data-palette="durazno"]:not([data-theme="light"]){--bg:#1d1511;--surface:#281d18;--sunken:#31241e;--line:#44302a;--ink:#f7ebe4;--muted:#c4a597;--accent:#ff9a7f;--accent-ink:#2e120a;--accent-soft:#45261c;}}
+:root[data-palette="durazno"][data-theme="dark"]{--bg:#1d1511;--surface:#281d18;--sunken:#31241e;--line:#44302a;--ink:#f7ebe4;--muted:#c4a597;--accent:#ff9a7f;--accent-ink:#2e120a;--accent-soft:#45261c;}
+:root[data-palette="azul"]{--bg:#f3f5f8;--surface:#ffffff;--sunken:#e7ebf1;--line:#dfe3ea;--ink:#18202e;--muted:#5d6779;--accent:#2f55d4;--accent-ink:#ffffff;--accent-soft:#dfe6fb;}
+@media (prefers-color-scheme: dark){:root[data-palette="azul"]:not([data-theme="light"]){--bg:#11151d;--surface:#1a1f2a;--sunken:#212734;--line:#2c3342;--ink:#e8ecf3;--muted:#9aa3b5;--accent:#7c9bff;--accent-ink:#0d1220;--accent-soft:#1f2a4a;}}
+:root[data-palette="azul"][data-theme="dark"]{--bg:#11151d;--surface:#1a1f2a;--sunken:#212734;--line:#2c3342;--ink:#e8ecf3;--muted:#9aa3b5;--accent:#7c9bff;--accent-ink:#0d1220;--accent-soft:#1f2a4a;}
+.switch{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--accent);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-weight:600;font-size:.88rem}
+.head-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* checklist de quincenas */
+.check{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);min-width:0}
+.check:last-child{border-bottom:0}
+.check .grow{flex:1;min-width:0;cursor:pointer}
+.check .title{font-weight:600;overflow-wrap:anywhere}
+.tick{width:30px;height:30px;flex:none;border-radius:9px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;color:var(--accent-ink)}
+.tick svg{width:18px;height:18px;opacity:0}
+.check.ok .tick{background:var(--accent);border-color:var(--accent)}
+.check.ok .tick svg{opacity:1}
+.check.ok .title,.check.ok .amt{text-decoration:line-through;color:var(--muted)}
+.amt{cursor:pointer}
+.q-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.q-sum{display:flex;gap:14px;flex-wrap:wrap;font-size:.84rem;color:var(--muted);margin-top:4px}
+.q-sum b{color:var(--ink);font-weight:600}
+.card.next{border:2px solid var(--accent)}
+details.done > summary{cursor:pointer;font-weight:600;color:var(--muted);padding:6px 2px;list-style:none}
+details.done > summary::-webkit-details-marker{display:none}
+details.done[open] > summary{margin-bottom:12px}
+details.done .stack{display:flex;flex-direction:column;gap:12px}
+.add-row{margin-top:8px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="label" id="hoy"></div>
+      <h1>Mis quincenas</h1>
+    </div>
+    <div class="head-actions">
+      <button class="btn primary" data-install>Instalar app</button>
+      <a class="switch" href="finanzas.html">← Mis finanzas</a>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <div class="in">
+      <button role="tab" data-tab="quincenas" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Quincenas</button>
+      <button role="tab" data-tab="deudas" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Deudas</button>
+      <button role="tab" data-tab="ajustes" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
+    </div>
+  </nav>
+
+  <main id="app"></main>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm">
+  <h2 id="dlgT">Editar pago</h2>
+  <div class="field"><label for="fN">Qué pago</label><input id="fN" required maxlength="60"></div>
+  <div class="field"><label for="fM">Monto</label><input id="fM" class="money" inputmode="numeric" required></div>
+  <div class="field"><label for="fD">Es abono a la deuda</label><select id="fD"></select></div>
+  <div class="field"><label for="fNo">Nota (opcional)</label><input id="fNo" maxlength="80"></div>
+  <div class="dlg-actions"><button type="button" class="btn danger" id="dlgDel">Borrar</button><span class="spacer"></span><button type="button" class="btn" id="dlgCancel">Cancelar</button><button class="btn primary" id="dlgOk">Guardar</button></div>
+</form></dialog>
+
+<dialog id="dlgDebt"><form method="dialog" id="debtForm">
+  <h2 id="debtT">Deuda</h2>
+  <div class="field"><label for="dN">Nombre</label><input id="dN" required maxlength="40"></div>
+  <div class="field"><label for="dTot">Total que debo</label><input id="dTot" class="money" inputmode="numeric" required></div>
+  <div class="field"><label for="dNo">Nota (opcional)</label><input id="dNo" maxlength="120"></div>
+  <div class="dlg-actions"><button type="button" class="btn danger" id="debtDel">Borrar</button><span class="spacer"></span><button type="button" class="btn" id="debtCancel">Cancelar</button><button class="btn primary">Guardar</button></div>
+</form></dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const fmt = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+const money = n => fmt.format(Math.round(n || 0)).replace(/ /g, " ");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const parseMoney = v => { const n = Number(String(v).replace(/[^\d]/g, "")); return isFinite(n) ? n : 0; };
+const fmtInput = v => { const n = parseMoney(v); return n ? n.toLocaleString("es-CO") : ""; };
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const fechaLarga = s => { const [y, m, d] = s.split("-").map(Number); return `${d} de ${MESES[m - 1]}${y !== new Date().getFullYear() ? " " + y : ""}`; };
+const LS = "quincenas-v1";
+const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>';
+
+/* ---------- plan inicial (el mismo del Excel, 27 oct 2026) ---------- */
+function seed() {
+  const D = [
+    ["nequi", "Crédito Nequi", 1260000, "$1.000.000 a 9 cuotas de $140.000. Se paga el 5 (1ra: 5 dic)."],
+    ["intn", "Intereses Nequi oct", 15000, "Del 22 oct al 5 nov."],
+    ["lic", "Addi licencia moto", 895146, "Vence el 28."],
+    ["ropa", "Addi ropa", 302857, "5 cuotas, vence el 28."],
+    ["zap", "Addi zapatos", 135000, "3 cuotas, vence el 28."],
+    ["nu", "Nu adelanto", 150000, "2 cuotas: máximo 10 dic y 10 ene."],
+    ["tia", "Tía Yazz", 50000, "$50.000 + el conjunto. Cuando sepas cuánto vale, súmalo aquí."],
+    ["mama", "Mamá Novaventa", 30000, ""],
+    ["icetex", "Reponer ICETEX (uñas)", 60000, "Plata del ICETEX de diciembre."],
+  ].map(([id, n, total, nota]) => ({ id, n, total, nota }));
+  const it = (n, m, deuda = "", nota = "") => ({ id: uid(), n, m, deuda, nota, ok: false });
+  const aseo = () => it("Aseo mamá", 50000, "", "Gasto fijo");
+  const tigo = () => it("Tigo celular", 48000, "", "Vence el 30");
+  const nequi = () => it("Crédito Nequi", 140000, "nequi", "Vence el 5 del otro mes");
+  const lic = (m = 140000) => it("Addi licencia moto", m, "lic", "Vence el 28");
+  const ropa = (m = 60572) => it("Addi ropa", m, "ropa", "Vence el 28");
+  const zap = () => it("Addi zapatos", 45000, "zap", "Vence el 28");
+  const tia = () => it("Abono tía Yazz", 50000, "tia", "Puede ser 30 o 50");
+  const Q = [
+    ["2026-10-30", [it("Pasajes noviembre", 100000, "", "Solo este mes"), it("Intereses Nequi", 15000, "intn"), it("Reponer ICETEX (uñas)", 60000, "icetex"), it("Retiro fin de semana", 150000, "", "30-31 oct y 1 nov"), it("Mamá Novaventa", 30000, "mama")]],
+    ["2026-11-15", [aseo(), it("Pasajes noviembre", 100000), lic(), ropa(), zap()]],
+    ["2026-11-30", [tigo(), nequi(), it("Nu adelanto", 75000, "nu", "1ra cuota, vence 10 dic"), tia()]],
+    ["2026-12-15", [aseo(), lic(), ropa(), zap()]],
+    ["2026-12-30", [tigo(), nequi(), it("Nu adelanto", 75000, "nu", "2da cuota, vence 10 ene"), tia()]],
+    ["2027-01-15", [aseo(), lic(), ropa(), zap()]],
+    ["2027-01-30", [tigo(), nequi(), tia()]],
+    ["2027-02-15", [aseo(), lic(), ropa()]],
+    ["2027-02-28", [tigo(), nequi(), tia()]],
+    ["2027-03-15", [aseo(), lic(), ropa(60569)]],
+    ["2027-03-30", [tigo(), nequi(), tia()]],
+    ["2027-04-15", [aseo(), lic()]],
+    ["2027-04-30", [tigo(), nequi()]],
+    ["2027-05-15", [aseo(), lic(55146)]],
+    ["2027-05-30", [tigo(), nequi()]],
+    ["2027-06-15", [aseo()]],
+    ["2027-06-30", [tigo(), nequi()]],
+    ["2027-07-15", [aseo()]],
+    ["2027-07-30", [tigo(), nequi()]],
+  ].map(([fecha, items]) => ({ id: uid(), fecha, items }));
+  return { ingreso: 400000, deudas: D, quincenas: Q };
+}
+
+let S;
+try { S = JSON.parse(localStorage.getItem(LS)); } catch (e) {}
+if (!S || !Array.isArray(S.quincenas)) S = seed();
+const save = () => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { toast("No se pudo guardar en este celular."); } };
+save();
+
+let tab = "quincenas";
+try { tab = localStorage.getItem("quincenas-tab") || tab; } catch (e) {}
+
+const sum = (a, f) => a.reduce((t, x) => t + f(x), 0);
+const qTotal = q => sum(q.items, i => i.m);
+const qPaid = q => sum(q.items, i => i.ok ? i.m : 0);
+const qDone = q => q.items.length > 0 && q.items.every(i => i.ok);
+const sorted = () => [...S.quincenas].sort((a, b) => a.fecha.localeCompare(b.fecha));
+const paidTo = id => sum(S.quincenas, q => sum(q.items, i => i.ok && i.deuda === id ? i.m : 0));
+const plannedTo = id => sum(S.quincenas, q => sum(q.items, i => i.deuda === id ? i.m : 0));
+
+/* ---------- vistas ---------- */
+function qCard(q, isNext) {
+  const tot = qTotal(q), paid = qPaid(q), left = S.ingreso - tot;
+  return `<div class="card${isNext ? " next" : ""}" data-q="${q.id}">
+    <div class="q-head"><h2>${isNext ? "👉 " : ""}${esc(fechaLarga(q.fecha))}</h2>
+      ${qDone(q) ? '<span class="chip good">Todo pagado</span>' : `<span class="chip ${left < 0 ? "bad" : left < 30000 ? "warn" : "neutral"}">Me queda <span class="num">${money(left)}</span></span>`}</div>
+    <div class="q-sum"><span>Debo sacar <b class="num">${money(tot)}</b></span><span>Ya pagué <b class="num">${money(paid)}</b></span></div>
+    <div class="bar" style="margin-top:10px"><i style="width:${tot ? Math.round(paid / tot * 100) : 0}%"></i></div>
+    <div class="list" style="margin-top:4px">${q.items.map(i => `
+      <div class="check${i.ok ? " ok" : ""}" data-item="${i.id}">
+        <button class="tick" data-toggle aria-pressed="${i.ok}" aria-label="Marcar ${esc(i.n)} como pagado">${TICK}</button>
+        <div class="grow" data-edit><div class="title">${esc(i.n)}</div>${i.nota ? `<div class="small muted">${esc(i.nota)}</div>` : ""}</div>
+        <div class="num amt" data-edit>${money(i.m)}</div>
+      </div>`).join("") || '<div class="empty">Sin pagos en esta quincena.</div>'}</div>
+    <div class="add-row"><button class="btn ghost" data-add>+ Agregar pago</button></div>
+  </div>`;
+}
+
+function vQuincenas() {
+  const qs = sorted();
+  const nextIdx = qs.findIndex(q => !qDone(q));
+  const next = qs[nextIdx];
+  const done = qs.slice(0, Math.max(nextIdx, 0)).filter(qDone);
+  const rest = nextIdx < 0 ? [] : qs.slice(nextIdx).filter(q => q !== next);
+  const hero = next ? `<div class="card hero">
+      <div class="label">Próxima quincena · ${esc(fechaLarga(next.fecha))}</div>
+      <div class="label" style="margin-top:4px">Debo sacar</div>
+      <div class="big">${money(qTotal(next) - qPaid(next))}</div>
+      <div class="split"><span>Me pagan ${money(S.ingreso)}</span><span>Me queda libre ${money(S.ingreso - qTotal(next))}</span></div>
+    </div>` : `<div class="card hero"><div class="big">¡Todo pagado! 🎉</div></div>`;
+  return `${hero}
+    ${next ? qCard(next, true) : ""}
+    ${rest.map(q => qCard(q, false)).join("")}
+    ${done.length ? `<details class="done"><summary>✓ Quincenas ya pagadas (${done.length})</summary><div class="stack">${done.map(q => qCard(q, false)).join("")}</div></details>` : ""}
+    <button class="btn" id="addQ">+ Agregar quincena</button>`;
+}
+
+function vDeudas() {
+  const rows = S.deudas.map(d => ({ d, paid: paidTo(d.id), plan: plannedTo(d.id) }));
+  const tot = sum(rows, r => r.d.total), paid = sum(rows, r => Math.min(r.paid, r.d.total));
+  return `<div class="card hero"><div class="label">Me falta pagar</div><div class="big">${money(tot - paid)}</div>
+      <div class="split"><span>Debo en total ${money(tot)}</span><span>Ya pagué ${money(paid)}</span></div></div>
+    <div class="card"><div class="list">${rows.map(({ d, paid, plan }) => {
+      const left = Math.max(0, d.total - paid), pct = d.total ? Math.min(100, Math.round(paid / d.total * 100)) : 0;
+      const gap = d.total - plan;
+      return `<div class="item" data-debt="${d.id}" style="flex-direction:column;align-items:stretch;gap:6px;cursor:pointer">
+        <div class="row"><div class="title">${esc(d.n)}</div>${left === 0 ? '<span class="chip good">Pagada ✓</span>' : `<span class="num">${money(left)}</span>`}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="small muted">Ya pagué ${money(paid)} de ${money(d.total)}${gap > 0 ? ` · <span class="neg">faltan ${money(gap)} por poner en alguna quincena</span>` : ""}${d.nota ? " · " + esc(d.nota) : ""}</div>
+      </div>`; }).join("")}</div></div>
+    <button class="btn" id="addDebt">+ Agregar deuda</button>
+    <p class="small muted">Toca una deuda para cambiar el total (por ejemplo, cuando sepas cuánto vale el conjunto de tu tía).</p>`;
+}
+
+function vAjustes() {
+  return `<div class="card" style="display:flex;flex-direction:column;gap:12px">
+      <h2>Lo que me pagan</h2>
+      <div class="field"><label for="ing">Por quincena</label><input id="ing" class="money" inputmode="numeric" value="${fmtInput(S.ingreso)}"></div>
+    </div>
+    <div class="card tip"><b>Cómo usarlo:</b><ol class="steps">
+      <li>Cuando pagues algo, toca el cuadrito y queda tachado.</li>
+      <li>Toca el nombre o el valor para cambiarlo, moverle la nota o borrarlo.</li>
+      <li>La quincena de arriba siempre es la próxima que tienes pendiente.</li>
+      <li>Tus datos quedan en este celular. Descarga la copia de seguridad en Mi agenda → Apariencia.</li></ol></div>
+    <button class="btn danger" id="reset">Volver al plan inicial</button>`;
+}
+
+const app = $("#app");
+function render() {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  app.innerHTML = `<section class="view">${tab === "deudas" ? vDeudas() : tab === "ajustes" ? vAjustes() : vQuincenas()}</section>`;
+}
+
+/* ---------- editar ---------- */
+let cur = null;
+const dlg = $("#dlg");
+function openItem(qid, iid) {
+  const q = S.quincenas.find(x => x.id === qid);
+  const i = iid ? q.items.find(x => x.id === iid) : null;
+  cur = { q, i };
+  $("#dlgT").textContent = i ? "Editar pago" : `Nuevo pago · ${fechaLarga(q.fecha)}`;
+  $("#fN").value = i ? i.n : ""; $("#fM").value = i ? fmtInput(i.m) : ""; $("#fNo").value = i ? i.nota : "";
+  $("#fD").innerHTML = `<option value="">No, es un gasto</option>` + S.deudas.map(d => `<option value="${d.id}"${i && i.deuda === d.id ? " selected" : ""}>${esc(d.n)}</option>`).join("");
+  $("#dlgDel").hidden = !i;
+  dlg.showModal();
+}
+$("#fM").addEventListener("input", e => { e.target.value = fmtInput(e.target.value); });
+$("#dlgCancel").onclick = () => dlg.close();
+$("#dlgDel").onclick = () => { cur.q.items = cur.q.items.filter(x => x !== cur.i); save(); dlg.close(); render(); toast("Pago borrado."); };
+$("#dlgForm").addEventListener("submit", () => {
+  const v = { n: $("#fN").value.trim(), m: parseMoney($("#fM").value), deuda: $("#fD").value, nota: $("#fNo").value.trim() };
+  if (!v.n) return;
+  if (cur.i) Object.assign(cur.i, v); else cur.q.items.push({ id: uid(), ok: false, ...v });
+  save(); render();
+});
+
+let curDebt = null;
+const dlgDebt = $("#dlgDebt");
+function openDebt(id) {
+  curDebt = id ? S.deudas.find(d => d.id === id) : null;
+  $("#debtT").textContent = curDebt ? "Editar deuda" : "Nueva deuda";
+  $("#dN").value = curDebt ? curDebt.n : ""; $("#dTot").value = curDebt ? fmtInput(curDebt.total) : ""; $("#dNo").value = curDebt ? curDebt.nota : "";
+  $("#debtDel").hidden = !curDebt;
+  dlgDebt.showModal();
+}
+$("#dTot").addEventListener("input", e => { e.target.value = fmtInput(e.target.value); });
+$("#debtCancel").onclick = () => dlgDebt.close();
+$("#debtDel").onclick = () => {
+  S.deudas = S.deudas.filter(d => d !== curDebt);
+  S.quincenas.forEach(q => q.items.forEach(i => { if (i.deuda === curDebt.id) i.deuda = ""; }));
+  save(); dlgDebt.close(); render();
+};
+$("#debtForm").addEventListener("submit", () => {
+  const v = { n: $("#dN").value.trim(), total: parseMoney($("#dTot").value), nota: $("#dNo").value.trim() };
+  if (!v.n) return;
+  if (curDebt) Object.assign(curDebt, v); else S.deudas.push({ id: uid(), ...v });
+  save(); render();
+});
+
+document.addEventListener("click", e => {
+  const tb = e.target.closest("nav.tabs button");
+  if (tb) { tab = tb.dataset.tab; try { localStorage.setItem("quincenas-tab", tab); } catch (x) {} render(); scrollTo(0, 0); return; }
+  const card = e.target.closest("[data-q]");
+  if (card) {
+    const q = S.quincenas.find(x => x.id === card.dataset.q);
+    const row = e.target.closest("[data-item]");
+    if (e.target.closest("[data-toggle]") && row) {
+      const i = q.items.find(x => x.id === row.dataset.item); i.ok = !i.ok; save();
+      if (i.ok && qDone(q)) toast("¡Quincena pagada completa! 💗");
+      render(); return;
+    }
+    if (e.target.closest("[data-edit]") && row) return openItem(q.id, row.dataset.item);
+    if (e.target.closest("[data-add]")) return openItem(q.id, null);
+  }
+  const dr = e.target.closest("[data-debt]"); if (dr) return openDebt(dr.dataset.debt);
+  if (e.target.closest("#addDebt")) return openDebt(null);
+  if (e.target.closest("#addQ")) {
+    const last = sorted().pop(); const d = last ? new Date(last.fecha + "T12:00") : new Date();
+    if (d.getDate() <= 15) { d.setDate(28); d.setDate(Math.min(30, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); }
+    else { d.setDate(1); d.setMonth(d.getMonth() + 1); d.setDate(15); }
+    const p = n => String(n).padStart(2, "0");
+    S.quincenas.push({ id: uid(), fecha: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`, items: [] });
+    save(); render(); toast("Quincena agregada al final."); return;
+  }
+  if (e.target.closest("#reset")) {
+    const b = e.target.closest("#reset");
+    if (b.dataset.sure) { S = seed(); save(); tab = "quincenas"; render(); toast("Listo, volviste al plan inicial."); }
+    else { b.dataset.sure = "1"; b.textContent = "¿Segura? Se borran tus marcas. Toca otra vez"; }
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "ing") { S.ingreso = parseMoney(e.target.value); save(); toast("Guardado."); }
+});
+document.addEventListener("input", e => { if (e.target.id === "ing") e.target.value = fmtInput(e.target.value); });
+
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }
+
+$("#hoy").textContent = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+render();
+})();
+</script>
+
+<script>
+/* app instalable: modo sin conexión + botón Instalar (siempre visible, con ayuda según el celular) */
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+(function(){
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const btns = () => document.querySelectorAll("[data-install]");
+  const setVis = v => btns().forEach(b => b.hidden = !v);
+  setVis(!standalone);
+  let deferred = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; setVis(true); });
+  addEventListener("appinstalled", () => setVis(false));
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(ua);
+  const samsung = /SamsungBrowser/i.test(ua);
+  const inApp = /; wv\)|FBAN|FBAV|Instagram|Line\/|WhatsApp|Claude/i.test(ua) || (android && !/Chrome\//.test(ua) && !/Firefox/.test(ua));
+  const iosSafari = ios && !/CriOS|FxiOS|EdgiOS|FBAN|FBAV|Instagram|Claude/i.test(ua);
+  function steps(){
+    if (ios && !iosSafari) return ["Estás en un navegador que no puede instalar apps en iPhone.", "Copia el enlace con el botón de abajo.", "Abre <b>Safari</b>, pégalo y entra.", "Toca <b>Instalar app</b> otra vez y sigue los pasos."];
+    if (ios) return ["Toca el botón <b>Compartir</b> de Safari (el cuadrito con la flecha hacia arriba ⬆️, abajo en la pantalla).", "Baja en la lista y toca <b>Agregar a inicio</b>.", "Toca <b>Agregar</b>. Listo: el ícono rosado queda en tu pantalla."];
+    if (inApp) return ["Abriste el enlace dentro de otra app y desde ahí no se puede instalar.", "Toca los tres puntos ⋮ y elige <b>Abrir en Chrome</b> (o copia el enlace y pégalo en Chrome).", "Ya en Chrome, toca <b>Instalar app</b> otra vez."];
+    if (samsung) return ["Toca el menú ☰ abajo a la derecha.", "Toca <b>Agregar página a</b> y luego <b>Pantalla de inicio</b>.", "Toca <b>Agregar</b>."];
+    if (android) return ["Toca los tres puntos ⋮ arriba a la derecha de Chrome.", "Toca <b>Instalar aplicación</b> o <b>Agregar a pantalla principal</b>.", "Toca <b>Instalar</b>. Listo: el ícono rosado queda en tu pantalla."];
+    return ["En el computador, busca el ícono de instalar (una pantallita con flecha) al final de la barra de direcciones de Chrome o Edge y tócalo.", "Para el celular, abre <b>angieemilly.github.io</b> en Chrome (Android) o Safari (iPhone) y toca <b>Instalar app</b>."];
+  }
+  function sheet(){
+    let s = document.getElementById("installSheet");
+    if (!s){
+      const st = document.createElement("style");
+      st.textContent = "#installSheet{position:fixed;inset:0;background:rgb(10 14 22 / .5);display:grid;place-items:end center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50}#installSheet .box{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;width:min(460px,100%);display:flex;flex-direction:column;gap:12px}#installSheet h2{margin:0;font-size:1.2rem}#installSheet ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px;line-height:1.45}#installSheet .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}#installSheet button{font:inherit;font-weight:600;border-radius:10px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}#installSheet .pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}";
+      document.head.append(st);
+      s = document.createElement("div"); s.id = "installSheet"; s.hidden = true;
+      s.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="instT"><h2 id="instT">Instalar Mi Control</h2><ol id="instSteps"></ol><div class="acts"><button type="button" id="instCopy">Copiar enlace</button><button type="button" class="pri" id="instOk">Entendido</button></div></div>';
+      document.body.append(s);
+      s.addEventListener("click", e => { if (e.target === s) s.hidden = true; });
+      s.querySelector("#instOk").onclick = () => s.hidden = true;
+      s.querySelector("#instCopy").onclick = async e => {
+        const url = "https://angieemilly.github.io/";
+        try { await navigator.clipboard.writeText(url); e.target.textContent = "¡Enlace copiado!"; } catch(x){ e.target.textContent = url; }
+      };
+    }
+    s.querySelector("#instSteps").innerHTML = steps().map(t => "<li>" + t + "</li>").join("");
+    s.hidden = false;
+  }
+  document.addEventListener("click", async e => {
+    const b = e.target.closest("[data-install]"); if (!b) return;
+    if (deferred){ deferred.prompt(); let ok = false; try { ok = (await deferred.userChoice).outcome === "accepted"; } catch(x){} deferred = null; if (ok) setVis(false); return; }
+    sheet();
+  });
+})();
+</script>
+</body></html>
