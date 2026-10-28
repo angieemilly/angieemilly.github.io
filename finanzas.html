@@ -243,6 +243,7 @@ function seed() {
     ["ropa", "Addi ropa", 302857, "5 cuotas, vence el 28."],
     ["zap", "Addi zapatos", 135000, "3 cuotas, vence el 28."],
     ["nu", "Nu adelanto", 150000, "2 cuotas: máximo 10 dic y 10 ene."],
+    ["nu2", "Nu avance retiro", 120000, "Cosas para el retiro. Se paga máximo el 10 dic."],
     ["tia", "Tía Yazz", 50000, "$50.000 + el conjunto. Cuando sepas cuánto vale, súmalo aquí."],
     ["mama", "Mamá Novaventa", 30000, ""],
     ["icetex", "Reponer ICETEX (uñas)", 60000, "Plata del ICETEX de diciembre."],
@@ -258,8 +259,8 @@ function seed() {
   const Q = [
     ["2026-10-30", [it("Pasajes noviembre", 100000, "", "Solo este mes"), it("Intereses Nequi", 15000, "intn"), it("Reponer ICETEX (uñas)", 60000, "icetex"), it("Retiro fin de semana", 150000, "", "30-31 oct y 1 nov"), it("Mamá Novaventa", 30000, "mama")]],
     ["2026-11-15", [aseo(), it("Pasajes noviembre", 100000), lic(), ropa(), zap()]],
-    ["2026-11-30", [tigo(), nequi(), it("Nu adelanto", 75000, "nu", "1ra cuota, vence 10 dic"), tia()]],
-    ["2026-12-15", [aseo(), lic(), ropa(), zap()]],
+    ["2026-11-30", [tigo(), nequi(), it("Nu adelanto", 75000, "nu", "1ra cuota, vence 10 dic"), it("Nu avance retiro", 120000, "nu2", "Vence 10 dic")]],
+    ["2026-12-15", [aseo(), lic(), ropa(), zap(), tia()]],
     ["2026-12-30", [tigo(), nequi(), it("Nu adelanto", 75000, "nu", "2da cuota, vence 10 ene"), tia()]],
     ["2027-01-15", [aseo(), lic(), ropa(), zap()]],
     ["2027-01-30", [tigo(), nequi(), tia()]],
@@ -282,6 +283,20 @@ function seed() {
 let S;
 try { S = JSON.parse(localStorage.getItem(LS)); } catch (e) {}
 if (!S || !Array.isArray(S.quincenas)) S = seed();
+/* cambios al plan que ya está guardado en el celular (no tocan lo que ya marcaste) */
+S.mig = S.mig || [];
+if (!S.mig.includes("nu2")) {
+  S.mig.push("nu2");
+  if (!S.deudas.some(d => d.id === "nu2")) {
+    S.deudas.push({ id: "nu2", n: "Nu avance retiro", total: 120000, nota: "Cosas para el retiro. Se paga máximo el 10 dic." });
+    const q30 = S.quincenas.find(q => q.fecha === "2026-11-30"), q15 = S.quincenas.find(q => q.fecha === "2026-12-15");
+    if (q30) {
+      q30.items.push({ id: uid(), n: "Nu avance retiro", m: 120000, deuda: "nu2", nota: "Vence 10 dic", ok: false });
+      const t = q30.items.find(i => i.deuda === "tia" && !i.ok);
+      if (t && q15) { q30.items = q30.items.filter(i => i !== t); q15.items.push(t); }
+    }
+  }
+}
 const save = () => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { toast("No se pudo guardar en este celular."); } };
 save();
 
